@@ -23,7 +23,13 @@ Estimated time: ~45 minutes total.
 2. Name it `rhythm`, pick a region close to you, set a DB password (save it)
 3. Wait ~2 minutes for it to provision
 
-**1b. Run the schema** — go to the SQL Editor and run this entire block:
+**1b. Disable email confirmation** ← do this FIRST or sign-up will be broken
+
+Supabase → Authentication → Providers → Email → toggle **"Confirm email"** OFF → Save
+
+> Without this, users must confirm their email before getting a session. This blocks the promo code flow, causes the "email rate limit exceeded" error during testing, and forces users to leave the app to check their inbox before they can access anything. Turn it off. You can always re-enable it before a public launch.
+
+**1c. Run the schema** — go to the SQL Editor and run this entire block:
 
 ```sql
 -- ── Profiles ────────────────────────────────────────────────────────────────
