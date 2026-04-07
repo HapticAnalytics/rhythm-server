@@ -19,12 +19,17 @@ const allowedOrigins = (process.env.FRONTEND_URL || '').split(',').map(s => s.tr
 
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow requests with no origin (mobile apps, curl, Railway health checks)
+    // Allow requests with no origin (mobile apps, Postman, health checks)
     if (!origin) return cb(null, true);
-    if (allowedOrigins.includes(origin)) return cb(null, true);
-    // During dev also allow localhost
+    // Always allow localhost for development
     if (origin.startsWith('http://localhost') || origin.startsWith('http://127.0.0.1')) return cb(null, true);
-    cb(new Error(`CORS: origin ${origin} not allowed`));
+    // Always allow any Netlify subdomain (covers all deploy previews + production)
+    if (origin.endsWith('.netlify.app')) return cb(null, true);
+    // Allow explicitly configured origins
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    // If FRONTEND_URL is not configured yet, allow all HTTPS (initial setup)
+    if (allowedOrigins.length === 0 && origin.startsWith('https://')) return cb(null, true);
+    cb(new Error(`CORS blocked: ${origin} — add it to FRONTEND_URL in Railway`));
   },
   credentials: true
 }));
