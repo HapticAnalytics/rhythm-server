@@ -125,7 +125,7 @@ Respond immediately. Be specific to their sensations. 3-4 sentences maximum.
 // Multi-turn chat. Receives { messages: [{role, content}] }
 
 router.post('/chat', requireAuth, requireAccess, async (req, res) => {
-  const { messages } = req.body;
+  const { messages, userContext } = req.body;
   if (!messages?.length) return res.status(400).json({ error: 'messages required' });
 
   // Fetch today's context
@@ -133,7 +133,7 @@ router.post('/chat', requireAuth, requireAccess, async (req, res) => {
   const { data: todayCheckin } = await supabase
     .from('daily_checkins').select('*').eq('user_id', req.user.id).eq('date', today).single();
 
-  const systemContext = `${CHAT_SYSTEM}\n\nUSER'S TODAY CHECK-IN: ${checkinContext(todayCheckin)}`;
+  const systemWithContext = `${CHAT_SYSTEM}\n\nUSER'S TODAY CHECK-IN: ${checkinContext(todayCheckin)}${userContext ? '\n\n' + userContext : ''}`;
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
@@ -144,7 +144,7 @@ router.post('/chat', requireAuth, requireAccess, async (req, res) => {
     const stream = anthropic.messages.stream({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 350,
-      system: systemContext,
+      system: systemWithContext,
       messages: messages.map(m => ({ role: m.role, content: m.content }))
     });
 
