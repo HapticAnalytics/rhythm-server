@@ -11,7 +11,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 router.get('/test', async (req, res) => {
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 20,
       messages: [{ role: 'user', content: 'Say "ok"' }]
     });
@@ -106,7 +106,7 @@ Respond immediately. Be specific to their sensations. 3-4 sentences maximum.
 
   try {
     const stream = anthropic.messages.stream({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 350,
       system: SPIRAL_STOPPER_SYSTEM,
       messages: [{ role: 'user', content: userMessage }]
@@ -175,7 +175,7 @@ router.post('/chat', requireAuth, requireAccess, async (req, res) => {
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 400,
       system: systemWithContext,
       messages: validMessages
@@ -282,7 +282,7 @@ Respond as JSON only — no markdown, no explanation outside the JSON:
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 1000,
       system: PATTERN_ANALYSIS_SYSTEM,
       messages: [{ role: 'user', content: userMessage }]
@@ -401,7 +401,7 @@ Tone: like a knowledgeable friend, not a health app. Warm, direct, real.
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-haiku-20241022',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 220,
       system: SPIRAL_STOPPER_SYSTEM,
       messages: [{ role: 'user', content: userMessage }]
