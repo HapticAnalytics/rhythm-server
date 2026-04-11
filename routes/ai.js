@@ -158,8 +158,9 @@ router.post('/chat', requireAuth, requireAccess, async (req, res) => {
     res.end();
 
   } catch (err) {
-    console.error('Chat error:', err.message);
-    res.write(`data: ${JSON.stringify({ text: "I'm having trouble connecting right now. Try again in a moment — I'm here.", done: true })}\n\n`);
+    console.error('Chat error:', err.status, err.message);
+    const detail = err.status ? `${err.status}: ${err.message}` : err.message || 'unknown';
+    res.write(`data: ${JSON.stringify({ text: `[AI unavailable: ${detail}]`, done: true })}\n\n`);
     res.end();
   }
 });
