@@ -128,6 +128,30 @@ router.post('/chat', requireAuth, requireAccess, async (req, res) => {
   const { messages, userContext } = req.body;
   if (!messages?.length) return res.status(400).json({ error: 'messages required' });
 
+  // Anthropic requires messages to start with role:'user' and alternate user/assistant.
+  // Strip any leading assistant messages (can happen from older frontend builds).
+  // Also ensure strict alternation by deduplicating consecutive same-role messages.
+  const rawMessages = messages.map(m => ({ role: m.role, content: String(m.content || '') }));
+  const validMessages = [];
+  for (const msg of rawMessages) {
+    const last = validMessages[validMessages.length - 1];
+    if (last && last.role === msg.role) {
+      // Merge consecutive same-role messages
+      last.content += '\n' + msg.content;
+    } else {
+      validMessages.push({ ...msg });
+    }
+  }
+  // Drop leading assistant messages
+  while (validMessages.length && validMessages[0].role !== 'user') validMessages.shift();
+
+  if (!validMessages.length) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.write(`data: ${JSON.stringify({ text: "I'm here. What's going on?", done: true })}\n\n`);
+    res.end();
+    return;
+  }
+
   // Fetch today's context
   const today = new Date().toISOString().split('T')[0];
   const { data: todayCheckin } = await supabase
@@ -145,7 +169,7 @@ router.post('/chat', requireAuth, requireAccess, async (req, res) => {
       model: 'claude-3-5-haiku-20241022',
       max_tokens: 350,
       system: systemWithContext,
-      messages: messages.map(m => ({ role: m.role, content: m.content }))
+      messages: validMessages
     });
 
     for await (const chunk of stream) {
