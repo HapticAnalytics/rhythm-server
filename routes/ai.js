@@ -92,7 +92,7 @@ Respond immediately. Be specific to their sensations. 3-4 sentences maximum.
 
   try {
     const stream = anthropic.messages.stream({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 350,
       system: SPIRAL_STOPPER_SYSTEM,
       messages: [{ role: 'user', content: userMessage }]
@@ -142,7 +142,7 @@ router.post('/chat', requireAuth, requireAccess, async (req, res) => {
 
   try {
     const stream = anthropic.messages.stream({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 350,
       system: systemWithContext,
       messages: messages.map(m => ({ role: m.role, content: m.content }))
@@ -159,7 +159,7 @@ router.post('/chat', requireAuth, requireAccess, async (req, res) => {
 
   } catch (err) {
     console.error('Chat error:', err.message);
-    res.write(`data: ${JSON.stringify({ text: "I'm here. Tell me more about what you're feeling right now.", done: true })}\n\n`);
+    res.write(`data: ${JSON.stringify({ text: "I'm having trouble connecting right now. Try again in a moment — I'm here.", done: true })}\n\n`);
     res.end();
   }
 });
@@ -250,7 +250,7 @@ Respond as JSON only — no markdown, no explanation outside the JSON:
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 1000,
       system: PATTERN_ANALYSIS_SYSTEM,
       messages: [{ role: 'user', content: userMessage }]
@@ -369,7 +369,7 @@ Tone: like a knowledgeable friend, not a health app. Warm, direct, real.
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-3-5-haiku-20241022',
       max_tokens: 220,
       system: SPIRAL_STOPPER_SYSTEM,
       messages: [{ role: 'user', content: userMessage }]
