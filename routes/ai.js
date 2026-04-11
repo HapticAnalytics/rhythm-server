@@ -7,6 +7,20 @@ import { computeTriggers, buildBestDayProfile } from '../lib/patterns.js';
 const router = express.Router();
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// ── GET /api/ai/test — no auth, diagnose Anthropic connection ────────────────
+router.get('/test', async (req, res) => {
+  try {
+    const response = await anthropic.messages.create({
+      model: 'claude-3-5-haiku-20241022',
+      max_tokens: 20,
+      messages: [{ role: 'user', content: 'Say "ok"' }]
+    });
+    res.json({ ok: true, reply: response.content[0].text, key: process.env.ANTHROPIC_API_KEY ? 'set' : 'MISSING' });
+  } catch (err) {
+    res.json({ ok: false, status: err.status, message: err.message, key: process.env.ANTHROPIC_API_KEY ? 'set' : 'MISSING' });
+  }
+});
+
 // ── Auth middleware ──────────────────────────────────────────────────────────
 
 async function requireAuth(req, res, next) {
@@ -159,30 +173,24 @@ router.post('/chat', requireAuth, requireAccess, async (req, res) => {
 
   const systemWithContext = `${CHAT_SYSTEM}\n\nUSER'S TODAY CHECK-IN: ${checkinContext(todayCheckin)}${userContext ? '\n\n' + userContext : ''}`;
 
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
-
   try {
-    const stream = anthropic.messages.stream({
+    const response = await anthropic.messages.create({
       model: 'claude-3-5-haiku-20241022',
-      max_tokens: 350,
+      max_tokens: 400,
       system: systemWithContext,
       messages: validMessages
     });
 
-    for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-        res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
-      }
-    }
-
-    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+    const text = response.content?.[0]?.text || "I'm here with you.";
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.write(`data: ${JSON.stringify({ text, done: true })}\n\n`);
     res.end();
 
   } catch (err) {
     console.error('Chat error:', err.status, err.message);
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
     res.write(`data: ${JSON.stringify({ text: "I'm having trouble connecting right now. Try again in a moment — I'm here.", done: true })}\n\n`);
     res.end();
   }
