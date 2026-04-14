@@ -39,17 +39,39 @@ router.get('/episodes', requireAuth, async (req, res) => {
 
 // POST /api/data/episodes — save a new episode
 router.post('/episodes', requireAuth, async (req, res) => {
-  const { sensation_types, intensity, duration_category, activity_before, position, created_at } = req.body;
+  const {
+    sensation_types, symptoms, intensity,
+    duration, duration_category,
+    body_state, body_state_other,
+    triggers, triggers_other,
+    notes, worried_flag,
+    time_of_day, day_of_week,
+    // legacy fields
+    activity_before, position, trigger_tags, episode_notes,
+    created_at
+  } = req.body;
 
   const { data, error } = await supabase
     .from('episodes')
     .insert({
       user_id: req.user.id,
-      sensation_types,
+      sensation_types: sensation_types || [],
+      symptoms: symptoms || sensation_types || [],
       intensity,
-      duration_category,
-      activity_before,
-      position,
+      duration: duration || duration_category || null,
+      duration_category: duration_category || duration || null,
+      body_state: body_state || [],
+      body_state_other: body_state_other || null,
+      triggers: triggers || [],
+      triggers_other: triggers_other || null,
+      notes: notes || episode_notes || null,
+      worried_flag: worried_flag || null,
+      time_of_day: time_of_day || null,
+      day_of_week: day_of_week || null,
+      // legacy
+      trigger_tags: trigger_tags || [],
+      activity_before: activity_before || null,
+      position: position || null,
       created_at: created_at || new Date().toISOString()
     })
     .select()
