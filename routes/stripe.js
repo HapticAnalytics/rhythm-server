@@ -106,18 +106,27 @@ router.post('/redeem-promo', requireAuth, async (req, res) => {
     return res.status(400).json({ error: 'This promo code has reached its limit.' });
   }
 
-  // Grant promo access
-  await supabase.from('profiles').update({
-    subscription_status: 'promo',
-    onboarding_complete: true
-  }).eq('id', req.user.id);
+  // Grant access — time-limited if duration_days is set, permanent promo otherwise
+  const profileUpdate = { onboarding_complete: true };
+  if (promo.duration_days) {
+    profileUpdate.subscription_status = 'trial';
+    profileUpdate.trial_ends_at = new Date(
+      Date.now() + promo.duration_days * 24 * 60 * 60 * 1000
+    ).toISOString();
+  } else {
+    profileUpdate.subscription_status = 'promo';
+  }
+  await supabase.from('profiles').update(profileUpdate).eq('id', req.user.id);
 
   // Increment uses
   await supabase.from('promo_codes').update({
     uses_count: promo.uses_count + 1
   }).eq('id', promo.id);
 
-  res.json({ success: true, message: 'Code applied! Welcome to Rhythm.' });
+  const msg = promo.duration_days
+    ? `Code applied! You have ${promo.duration_days} days of free access.`
+    : 'Code applied! Welcome to Rhythm.';
+  res.json({ success: true, message: msg });
 });
 
 // POST /api/stripe/webhook
