@@ -107,7 +107,9 @@ router.post('/redeem-promo', requireAuth, async (req, res) => {
   }
 
   // Grant access — time-limited if duration_days is set, permanent promo otherwise
-  const profileUpdate = { onboarding_complete: true };
+  // Note: onboarding_complete is intentionally NOT set here so the user goes
+  // through the onboarding questions and first-run guide normally.
+  const profileUpdate = {};
   if (promo.duration_days) {
     profileUpdate.subscription_status = 'trial';
     profileUpdate.trial_ends_at = new Date(
